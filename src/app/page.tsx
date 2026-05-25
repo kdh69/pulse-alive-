@@ -39,7 +39,9 @@ type PersonRow = {
 };
 
 async function getBoardData() {
-  const { data: people, error: peopleError } = await supabaseServer
+  const db = supabaseServer();
+
+  const { data: people, error: peopleError } = await db
     .from("people")
     .select("id, name, quiet_window_minutes, alert_window_minutes")
     .order("name", { ascending: true });
@@ -47,7 +49,7 @@ async function getBoardData() {
     throw new Error(peopleError?.message ?? "Failed to load people");
   }
 
-  const { data: enabledSources, error: sourcesError } = await supabaseServer
+  const { data: enabledSources, error: sourcesError } = await db
     .from("person_sources")
     .select("person_id, source_slug")
     .eq("enabled", true);
@@ -63,7 +65,7 @@ async function getBoardData() {
   });
 
   const personIds = people.map((person) => person.id);
-  const { data: pings, error: pingsError } = await supabaseServer
+  const { data: pings, error: pingsError } = await db
     .from("pings")
     .select("person_id, source_slug, created_at")
     .in("person_id", personIds);

@@ -1,15 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let cachedClient: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error(
-    "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable."
-  );
+export function supabaseServer(): SupabaseClient {
+  if (cachedClient) return cachedClient;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error(
+      "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable."
+    );
+  }
+
+  cachedClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { persistSession: false },
+    global: { headers: { "x-ssr": "1" } },
+  });
+
+  return cachedClient;
 }
-
-export const supabaseServer = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { persistSession: false },
-  global: { headers: { "x-ssr": "1" } },
-});
