@@ -116,7 +116,13 @@ function getStatus(
 }
 
 export default async function Home() {
-  const rows: PersonRow[] = await getBoardData();
+  let rows: PersonRow[] = [];
+  let setupError: string | null = null;
+  try {
+    rows = await getBoardData();
+  } catch (e) {
+    setupError = e instanceof Error ? e.message : String(e);
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -129,31 +135,43 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="space-y-4">
-          {rows.map((person) => (
-            <article
-              key={person.id}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900">{person.name}</h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Last seen {formatAge(person.last_seen_at)}
-                    {person.source_slug ? ` · ${person.source_slug}` : ""}
-                  </p>
+        {setupError ? (
+          <article className="rounded-2xl border border-rose-300 bg-rose-50 p-6 shadow-sm">
+            <h2 className="text-base font-semibold text-rose-900">Setup error</h2>
+            <p className="mt-1 text-sm text-rose-800">
+              The board could not load. Underlying error:
+            </p>
+            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-white p-3 text-xs text-rose-900">
+              {setupError}
+            </pre>
+          </article>
+        ) : (
+          <div className="space-y-4">
+            {rows.map((person) => (
+              <article
+                key={person.id}
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-slate-900">{person.name}</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Last seen {formatAge(person.last_seen_at)}
+                      {person.source_slug ? ` · ${person.source_slug}` : ""}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${statusClasses(
+                      person.status
+                    )}`}
+                  >
+                    {statusLabels[person.status]}
+                  </span>
                 </div>
-                <span
-                  className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${statusClasses(
-                    person.status
-                  )}`}
-                >
-                  {statusLabels[person.status]}
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
